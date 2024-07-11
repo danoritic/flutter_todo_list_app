@@ -1,4 +1,10 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
+
+import 'memory_analyst.dart';
+import 'package:uuid/uuid.dart';
 
 void main() {
   runApp(const MyApp());
@@ -13,42 +19,21 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Todo',
+      themeMode: ThemeMode.dark,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF31325A),
+        ),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Todo List'),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
 
   final String title;
 
@@ -57,111 +42,209 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  DatabaseHelper todoDBHandler = DatabaseHelper(
+      fieldString: 'todoID int,text TEXT,date TEXT,isComplete INTEGER',
+      tableName: 'todoList',
+      dbName: 'todoList.db');
   int _counter = 0;
   List listOfCompletedTasks = [];
   List listOfAllTasks = [];
+  @override
+  void initState() {
+    // todoDBHandler.clearTable("todoList");
+    super.initState();
+    SchedulerBinding.instance.addPostFrameCallback((timeStamp) async {
+      listOfAllTasks = await todoDBHandler.getAll("todoList");
+      setState(() {});
+      // for (Map<String, dynamic> i in listOfAllTasks) {
+      //   if (i["isComplete"]) {
+      //     listOfCompletedTasks.add(i);
+      //   }
+      // }
+    });
+  }
 
   void _incrementCounter() {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
       _counter++;
     });
   }
 
-  int? selectedChip;
+  int? selectedChip = 0;
+  TextEditingController controller = TextEditingController();
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       backgroundColor: const Color(0xFF31325A),
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        title: Text(widget.title, style: const TextStyle(color: Colors.white)),
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
             children: [
-              Container(decoration: BoxDecoration(color: colbla)),
+              Container(
+                height: 50,
+                width: MediaQuery.of(context).size.width * .9,
+                decoration: BoxDecoration(
+                  color: Colors.black.withAlpha(50),
+                  borderRadius: BorderRadius.circular(30),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                  child: Stack(children: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 50.0, left: 20),
+                      child: TextField(
+                        onAppPrivateCommand: controller.text.isNotEmpty
+                            ? (value, map) async {
+                                await todoDBHandler.insert({
+                                  "todoID": const Uuid().v4(),
+                                  "text": value,
+                                  "isComplete": 0
+                                }, "todoList");
+
+                                print(listOfAllTasks);
+                                listOfAllTasks =
+                                    await todoDBHandler.getAll("todoList");
+                                controller.text = "";
+                                setState(() {});
+                              }
+                            : (value, map) {},
+                        style: const TextStyle(color: Colors.white),
+                        onSubmitted: controller.text.isNotEmpty
+                            ? (value) async {
+                                await todoDBHandler.insert({
+                                  "todoID": const Uuid().v4(),
+                                  "text": value,
+                                  "isComplete": 0
+                                }, "todoList");
+
+                                print(listOfAllTasks);
+                                listOfAllTasks =
+                                    await todoDBHandler.getAll("todoList");
+                                controller.text = "";
+                                setState(() {});
+                              }
+                            : (value) {},
+                        decoration: const InputDecoration(
+                          border: InputBorder.none,
+                        ),
+                        controller: controller,
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: IconButton(
+                        visualDensity: VisualDensity.compact,
+                        style: ButtonStyle(
+                            backgroundColor: MaterialStatePropertyAll(
+                                Theme.of(context).colorScheme.primary)),
+                        color: Colors.white,
+                        onPressed: controller.text.isNotEmpty
+                            ? () async {
+                                await todoDBHandler.insert({
+                                  "todoID": const Uuid().v4(),
+                                  "text": controller.text,
+                                  "isComplete": 0
+                                }, "todoList");
+
+                                print(listOfAllTasks);
+                                listOfAllTasks =
+                                    await todoDBHandler.getAll("todoList");
+                                controller.text = "";
+                                setState(() {});
+                              }
+                            : () {},
+                        icon: const Icon(
+                          Icons.add,
+                          size: 15,
+                        ),
+                      ),
+                    )
+                  ]),
+                ),
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * .04,
+              ),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  ChoiceChip(
-                    label: Text("All"),
-                    selected: selectedChip == 0,
-                    onSelected: (value) {
-                      selectedChip = 0;
-                      setState(() {});
-                    },
-                  ),
-                  SizedBox(width: 20),
-                  ChoiceChip(
-                    label: Text("Incompleted"),
-                    selected: selectedChip == 1,
-                    onSelected: (value) {
-                      selectedChip = 1;
-                      setState(() {});
-                    },
-                  ),
-                  SizedBox(width: 20),
-                  ChoiceChip(
-                    label: Text("completed"),
-                    selected: selectedChip == 2,
-                    onSelected: (value) {
-                      selectedChip = 2;
-                      setState(() {});
-                    },
-                  ),
+                  _buidChip(label: "All", index: 0),
+                  const SizedBox(width: 20),
+                  _buidChip(label: "Completed", index: 1),
+                  const SizedBox(width: 20),
+                  _buidChip(label: "Incompleted", index: 2),
                 ],
               ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * .04,
+              ),
               Column(
-                // Column is also a layout widget. It takes a list of children and
-                // arranges them vertically. By default, it sizes itself to fit its
-                // children horizontally, and tries to be as tall as its parent.
-                //
-                // Column has various properties to control how it sizes itself and
-                // how it positions its children. Here we use mainAxisAlignment to
-                // center the children vertically; the main axis here is the vertical
-                // axis because Columns are vertical (the cross axis would be
-                // horizontal).
-                //
-                // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-                // action in the IDE, or press "p" in the console), to see the
-                // wireframe for each widget.
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  TodoWidget(
-                      isInitiallySelected: false,
-                      text: "text your love",
-                      date: DateTime.now().toString())
-                ],
+                children: ((selectedChip == 0)
+                        ? listOfAllTasks
+                        : (selectedChip == 1)
+                            ? listOfAllTasks
+                                .where((element) => element['isComplete'] == 1)
+                            : listOfAllTasks
+                                .where((element) => element["isComplete"] == 0))
+                    .map((e) {
+                  print("e" * 120);
+                  print(e);
+                  return Column(
+                    children: [
+                      TodoWidget(
+                        isInitiallySelected: () {
+                          print(e?["isComplete"] == 1);
+                          return e?["isComplete"] == 1;
+                        }.call(),
+                        text: e?["text"],
+                        date: e?["date"] ?? "",
+                        onSelectFunction: (value) async {
+                          await todoDBHandler.database?.update(
+                              "todoList", {"isComplete": (value) ? 1 : 0},
+                              where: "todoID = ?", whereArgs: [e["todoID"]]);
+                          listOfAllTasks =
+                              await todoDBHandler.getAll("todoList");
+                          setState(() {});
+                        },
+                      ),
+                      const SizedBox(height: 10)
+                    ],
+                  );
+                }).toList(),
               ),
             ],
           ),
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      // floatingActionButton: FloatingActionButton(
+      //   onPressed: _incrementCounter,
+      //   tooltip: 'Increment',
+      //   child: const Icon(Icons.add),
+      // ), // This trailing comma makes auto-formatting nicer for build methods.
+    );
+  }
+
+  Widget _buidChip({int? index, required String label}) {
+    return SizedBox(
+      height: 40,
+      child: ChoiceChip(
+        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+        side: BorderSide.none,
+        shape: null,
+        label: Text(label),
+        selected: selectedChip == index,
+        onSelected: (value) async {
+          selectedChip = index;
+          listOfAllTasks = await todoDBHandler.getAll("todoList");
+          setState(() {});
+        },
+      ),
     );
   }
 }
@@ -174,16 +257,19 @@ class TodoWidget extends StatefulWidget {
     required this.isInitiallySelected,
     required this.text,
     required this.date,
+    required this.onSelectFunction,
   });
   bool isInitiallySelected;
   String text;
+  Function(bool) onSelectFunction;
 
   @override
   State<TodoWidget> createState() => _TodoWidgetState();
 }
 
 class _TodoWidgetState extends State<TodoWidget> {
-  late bool isSelected;
+  bool isSelected = true;
+
   @override
   void initState() {
     // TODO: implement initState
@@ -193,6 +279,7 @@ class _TodoWidgetState extends State<TodoWidget> {
 
   @override
   Widget build(BuildContext context) {
+    isSelected = widget.isInitiallySelected;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withAlpha(20),
@@ -207,11 +294,13 @@ class _TodoWidgetState extends State<TodoWidget> {
             decoration: const BoxDecoration(
                 shape: BoxShape.circle, color: Colors.white),
             child: IconButton(
+                iconSize: 10,
                 onPressed: () {
-                  isSelected = !isSelected;
+                  isSelected = true;
+                  widget.onSelectFunction.call(isSelected);
                   setState(() {});
                 },
-                padding: EdgeInsets.all(0),
+                padding: const EdgeInsets.all(0),
                 color: isSelected
                     ? Colors.green.withAlpha(100)
                     : Colors.transparent,
@@ -221,12 +310,22 @@ class _TodoWidgetState extends State<TodoWidget> {
                   color: isSelected ? Colors.green : Colors.transparent,
                 )),
           ),
+          SizedBox(width: MediaQuery.of(context).size.width * .03),
           Text(
             widget.text,
-            style: TextStyle(color: mainTextColor, fontWeight: FontWeight.bold),
+            style: TextStyle(
+                color: mainTextColor,
+                fontWeight: FontWeight.bold,
+                decorationColor: Colors.white,
+                decorationStyle: TextDecorationStyle.wavy,
+                decorationThickness: 2,
+                decoration: isSelected ? TextDecoration.lineThrough : null),
           ),
           const Expanded(child: SizedBox()),
-          Text(widget.date),
+          Text(
+            widget.date,
+            style: const TextStyle(color: Colors.blue),
+          ),
         ]),
       ),
     );
