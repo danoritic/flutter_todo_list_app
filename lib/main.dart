@@ -58,6 +58,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
+  List listOfCompletedTasks = [];
+  List listOfAllTasks = [];
 
   void _incrementCounter() {
     setState(() {
@@ -97,6 +99,7 @@ class _MyHomePageState extends State<MyHomePage> {
           padding: const EdgeInsets.all(8.0),
           child: Column(
             children: [
+              Container(decoration: BoxDecoration(color: colbla)),
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -113,7 +116,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     label: Text("Incompleted"),
                     selected: selectedChip == 1,
                     onSelected: (value) {
-                      selectedChip = 0;
+                      selectedChip = 1;
                       setState(() {});
                     },
                   ),
@@ -122,7 +125,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     label: Text("completed"),
                     selected: selectedChip == 2,
                     onSelected: (value) {
-                      selectedChip = 0;
+                      selectedChip = 2;
                       setState(() {});
                     },
                   ),
@@ -144,13 +147,6 @@ class _MyHomePageState extends State<MyHomePage> {
                 // wireframe for each widget.
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
-                  const Text(
-                    'You have pushed the button this many times:',
-                  ),
-                  Text(
-                    '$_counter',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
                   TodoWidget(
                       isInitiallySelected: false,
                       text: "text your love",
