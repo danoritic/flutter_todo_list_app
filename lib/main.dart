@@ -46,7 +46,7 @@ class _MyHomePageState extends State<MyHomePage> {
       fieldString: 'todoID int,text TEXT,date TEXT,isComplete INTEGER',
       tableName: 'todoList',
       dbName: 'todoList.db');
-  int _counter = 0;
+
   List listOfCompletedTasks = [];
   List listOfAllTasks = [];
   @override
@@ -61,12 +61,6 @@ class _MyHomePageState extends State<MyHomePage> {
       //     listOfCompletedTasks.add(i);
       //   }
       // }
-    });
-  }
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
     });
   }
 
