@@ -97,13 +97,36 @@ class _MyHomePageState extends State<MyHomePage> {
           padding: const EdgeInsets.all(8.0),
           child: Column(
             children: [
-              ChoiceChip(
-                label: Text("label"),
-                selected: selectedChip == 0,
-                onSelected: (value) {
-                  selectedChip = 0;
-                  setState(() {});
-                },
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  ChoiceChip(
+                    label: Text("All"),
+                    selected: selectedChip == 0,
+                    onSelected: (value) {
+                      selectedChip = 0;
+                      setState(() {});
+                    },
+                  ),
+                  SizedBox(width: 20),
+                  ChoiceChip(
+                    label: Text("Incompleted"),
+                    selected: selectedChip == 1,
+                    onSelected: (value) {
+                      selectedChip = 0;
+                      setState(() {});
+                    },
+                  ),
+                  SizedBox(width: 20),
+                  ChoiceChip(
+                    label: Text("completed"),
+                    selected: selectedChip == 2,
+                    onSelected: (value) {
+                      selectedChip = 0;
+                      setState(() {});
+                    },
+                  ),
+                ],
               ),
               Column(
                 // Column is also a layout widget. It takes a list of children and
